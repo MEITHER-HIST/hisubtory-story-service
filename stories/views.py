@@ -31,16 +31,12 @@ class WebtoonListView(generics.ListAPIView):
         data = serializer.data
 
         if request.user.is_authenticated:
-            viewed_episode_ids = list(UserViewedEpisode.objects.using('default').filter(
+            viewed_ids = UserViewedEpisode.objects.filter(
                 user=request.user
-            ).values_list('episode_id', flat=True))
-            
-            viewed_webtoon_ids = set(Episode.objects.using('mysql').filter(
-                episode_id__in=viewed_episode_ids
-            ).values_list('webtoon_id', flat=True))
+            ).values_list('episode__webtoon_id', flat=True).distinct()
             
             for item in data:
-                item['is_viewed'] = item['webtoon_id'] in viewed_webtoon_ids
+                item['is_viewed'] = item['webtoon_id'] in viewed_ids
         else:
             for item in data:
                 item['is_viewed'] = False
@@ -58,13 +54,13 @@ class EpisodeDetailAPIView(generics.RetrieveAPIView):
         
         is_already_viewed = False
         if request.user.is_authenticated:
-            is_already_viewed = UserViewedEpisode.objects.using('default').filter(
-                user=request.user, episode_id=episode.episode_id
+            is_already_viewed = UserViewedEpisode.objects.filter(
+                user=request.user, episode=episode
             ).exists()
             
-            UserViewedEpisode.objects.using('default').update_or_create(
+            UserViewedEpisode.objects.update_or_create(
                 user=request.user, 
-                episode_id=episode.episode_id, 
+                episode=episode, 
                 defaults={'viewed_at': timezone.now()}
             )
 
@@ -79,7 +75,7 @@ class EpisodeDetailAPIView(generics.RetrieveAPIView):
             "success": True,
             "episode": episode_data,
             "cuts": cuts_data,
-            "is_bookmarked": Bookmark.objects.using('default').filter(user=request.user, episode_id=episode.episode_id).exists() if request.user.is_authenticated else False
+            "is_bookmarked": Bookmark.objects.filter(user=request.user, episode=episode).exists() if request.user.is_authenticated else False
         })
 
 # ✅ 2. 스테이션 스토리 뷰 (랜덤 로직 수정)
@@ -144,22 +140,17 @@ class EpisodeCutListCreateView(generics.ListCreateAPIView):
     def get_queryset(self): return Cut.objects.filter(episode_id=self.kwargs["episode_id"]).order_by("cut_order")
     def perform_create(self, serializer): serializer.save(episode_id=self.kwargs["episode_id"])
 
-from django.views.decorators.csrf import csrf_exempt
-
 # ✅ 4. 북마크 토글 API
 @api_view(['POST'])
-@csrf_exempt
 @authentication_classes([UnsafeSessionAuthentication])
 @permission_classes([IsAuthenticated])
 def toggle_bookmark_api(request, episode_id):
     episode = get_object_or_404(Episode, episode_id=episode_id)
-    with transaction.atomic(using='default'):
-        qs = Bookmark.objects.using('default').filter(user=request.user, episode_id=episode.episode_id)
+    with transaction.atomic():
+        qs = Bookmark.objects.filter(user=request.user, episode=episode)
         is_bookmarked = not qs.exists()
-        if not is_bookmarked: 
-            qs.delete()
-        else: 
-            Bookmark.objects.using('default').create(user=request.user, episode_id=episode.episode_id)
+        if not is_bookmarked: qs.delete()
+        else: Bookmark.objects.create(user=request.user, episode=episode)
     return Response({"success": True, "is_bookmarked": is_bookmarked})
 
 # ✅ 5. HTML용 뷰
@@ -170,7 +161,6 @@ def episode_detail(request, episode_id):
 @login_required
 def toggle_bookmark(request, episode_id):
     episode = get_object_or_404(Episode, episode_id=episode_id)
-    bm, cr = Bookmark.objects.using('default').get_or_create(user=request.user, episode_id=episode.episode_id)
-    if not cr: 
-        bm.delete()
+    bm, cr = Bookmark.objects.get_or_create(user=request.user, episode=episode)
+    if not cr: bm.delete()
     return redirect('episode_detail', episode_id=episode_id)
