@@ -1,0 +1,57 @@
+{
+  "family": "hisubtory-app-task",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "REPLACE_ME",
+      "cpu": 256,
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST", "value": "hisubtory-db.cnwkq8oe8jr5.ap-northeast-2.rds.amazonaws.com" },
+        { "name": "DB_NAME", "value": "hisubtory_db" },
+        { "name": "DB_USER", "value": "admin" },
+        { "name": "DB_PORT", "value": "3306" },
+        { "name": "DB_PASSWORD", "value": "REPLACE_ME_DB_PASSWORD" },
+        { "name": "SB_DB_HOST", "value": "aws-1-ap-northeast-2.pooler.supabase.com" },
+        { "name": "SB_DB_NAME", "value": "postgres" },
+        { "name": "SB_DB_USER", "value": "postgres.jlvhwihvmivvihffhxse" },
+        { "name": "SB_DB_PORT", "value": "5432" },
+        { "name": "SB_DB_PASSWORD", "value": "REPLACE_ME_SB_DB_PASSWORD" },
+        { "name": "REDIS_HOST", "value": "REPLACE_ME_REDIS_HOST" },
+        { "name": "REDIS_PORT", "value": "6379" },
+        { "name": "AWS_STORAGE_BUCKET_NAME", "value": "REPLACE_ME_S3_BUCKET" },
+        { "name": "AWS_S3_REGION_NAME", "value": "ap-northeast-2" },
+        { "name": "AWS_ACCESS_KEY_ID", "value": "REPLACE_ME_AWS_KEY" },
+        { "name": "AWS_SECRET_ACCESS_KEY", "value": "REPLACE_ME_AWS_SECRET" },
+        { "name": "SUPABASE_URL", "value": "REPLACE_ME_SUPABASE_URL" },
+        { "name": "SUPABASE_KEY", "value": "REPLACE_ME_SUPABASE_KEY" },
+        { "name": "SECRET_KEY", "value": "REPLACE_ME_SECRET_KEY" },
+        { "name": "DEBUG", "value": "REPLACE_ME_DEBUG" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/hisubtory-app-task",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::714454205561:role/hisubtory-ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::714454205561:role/hisubtory-ecs-task-role"
+}
