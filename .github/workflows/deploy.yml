@@ -5,7 +5,7 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: hisubtory-story
-  ECS_SERVICE: hisubtory-story-service
+  ECS_SERVICE: hisubtory-service
   ECS_CLUSTER: hisubtory-cluster
   CONTAINER_NAME: app
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
